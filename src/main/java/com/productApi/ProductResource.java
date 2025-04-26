@@ -4,10 +4,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Path("/product")
@@ -70,7 +67,35 @@ public class ProductResource {
         if(optionalProduct.isPresent()) {
             return Response.ok(optionalProduct.get()).build();
         }
-
-        return Response.ok(productsList.get(productId)).build();
+        else {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
     }
+
+    @GET
+    @Produces(MediaType.TEXT_PLAIN)
+    @Path("/{id}/stock")
+    public Response getStockAvailable(@PathParam("id") int productId,@QueryParam("count") int count) {
+        Optional<Product> optionalProduct = productsList.stream().filter(product -> product.getId()==productId).findFirst();
+        if(optionalProduct.isPresent()) {
+            if (optionalProduct.get().getQuantity() >= count) {
+                return Response.ok(productId + " is available for " + count + " quantity").build();
+            }
+            else {
+                return Response.ok(productId + " is not available for " + count + " quantity").build();
+            }
+        }
+        else {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/SortedProductList")
+    public Response getProductInAscendingOrder() {
+        List<Product> sortedProductsByPrice = productsList.stream().sorted(Comparator.comparing(Product::getPrice)).collect(Collectors.toList());
+        return Response.ok(sortedProductsByPrice).build();
+    }
+
 }
